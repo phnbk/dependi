@@ -2,23 +2,20 @@ from print_scope import PrintScope, Print
 from collections import namedtuple
 
 class FactStore(object):
-    def __init__(self, callee):
-        # Will be called on events registered with ListenFor*().
-        self.callee = callee
-        
+    def __init__(self):
         # Maps from symbol to set of ground predicates.
         self.facts = {}
         
-        # Maps from symbol to list of event arguments. On addition of a fact with
-        # symbol S, callee will be called for each registered event argument with S, the fact and the argument.
-        self.event_args = {}
+        # Maps from symbol to list of listeners. On addition of a fact with
+        # symbol S, listeners for that symbol will be called with S and the fact.
+        self.listeners = {}
         
-    def ListenFor(self, symbol, event_arg):
-        self.event_args.setdefault(symbol, set()).add(event_arg)
+    def ListenFor(self, symbol, listener):
+        self.listeners.setdefault(symbol, set()).add(listener)
 
-    def ListenForAnyOf(self, symbols, event_arg):
+    def ListenForAnyOf(self, symbols, listener):
         for s in symbols:
-            self.ListenFor(s, event_arg)
+            self.ListenFor(s, listener)
             
     def ListenForAllOf(self, symbols, callback):
         missing_symbols = set(symbols)

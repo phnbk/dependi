@@ -2,6 +2,7 @@ from collections import namedtuple
 from functools import partial
 from rule_store import RuleStore, Rule, Match, DerivedFacts
 from unification import Unification
+from copy import deepcopy
 
 ### TODO: `name' of impl is should be declared and reused and not an adhoc name.
 
@@ -73,16 +74,13 @@ class Types(object):
     def NewType(self):
         self.last_type = self.last_type.Next()
         return self.last_type
-
+        
 class Context(object):
     Generic = namedtuple('Generic', 'name impl_f kw_to_pos')
     
     def __init__(self):
         self.store = RuleStore(ImplUnification())
     
-    def Copy(self):
-        return Context()
-        
     def Add(self, impl):
         CheckIsGroundImplementation(impl)
         self.store.AddFact(impl)
@@ -116,7 +114,10 @@ class Context(object):
            required_impls[kw] = match.facts[pos].impl
         
         types = tuple(map(lambda s: s[1], sorted(match.substitutions, key=lambda s: s[0])))
-        new_impls = generic.impl_f(types=types, **required_impls)
+        context = deepcopy(global_context)
+        for impl in match.facts:
+            context.Add(impl)
+        new_impls = generic.impl_f(types=types, _=context, **required_impls)
         for impl in new_impls:
             CheckIsGroundImplementation(impl)
         return new_impls
@@ -131,3 +132,4 @@ class Context(object):
             required_items_positional.append(required_impl)
         return kw_to_pos, required_items_positional
         
+global_context = Context()

@@ -1,15 +1,10 @@
 from collections import namedtuple
 from functools import partial
-from context import Context, Implementation, ImplPattern, TypeVar, Type, Types
+from context import Context, Implementation, ImplPattern, TypeVar, Type, Types, global_context
 
-class AttributeView(object):
-    def __init__(self, d):
-        self.d = d
-    def __getattr__(self, attr):
-        return self.d.get(attr)
+_ = global_context
 
-
-_ = Context()
+###### INTERFACES #######
 
 class List(object):
     pass
@@ -28,11 +23,27 @@ class PrintList(List):
 
 class Lists(object):
     pass
-    #def Empty(self)
-    #def Append(self, ls, x)
+    #def Empty()
+    #def Append(ls, x)
+
+class IotaLists(object):
+    pass
+    #def Create(num_elements)
+
+class Main(object):
+    pass
+    #def Main()
+
+###### CONCRETE IMPLEMENTATIONS #######
 
 Iota = namedtuple('Iota', 'num_elements')
+IotaT = Types.NewType()
 
+class IotaListsImpl(IotaLists):
+    @staticmethod
+    def Create(num_elements):
+        return Iota(num_elements)
+        
 class IotaIsFinite(FiniteList):
     @staticmethod
     def Size(iota):
@@ -45,17 +56,14 @@ class IotaRandomAccess(RandomAccess):
             raise ValueError("%s out of bounds [0, %s)." %(i, iota.num_elements))
         return i
 
-def MakeIota(num_elements):
-    iota = Iota(num_elements)
-    
-    I = Types.NewType()
-        
-    _.Add(Implementation('FiniteList', (I,), IotaIsFinite))
-    _.Add(Implementation('RandomAccess', (I,), IotaRandomAccess))
-            
-    return (iota, I)
+_.Add(Implementation('IotaLists', (IotaT,), IotaListsImpl))
+_.Add(Implementation('FiniteList', (IotaT,), IotaIsFinite))
+_.Add(Implementation('RandomAccess', (IotaT,), IotaRandomAccess))
 
-def GenPrintList(finite, raccess, types):
+
+###### GENERIC IMPLEMENTATIONS #######
+
+def GenPrintList(finite, raccess, types, _):
     L, = types
     class PrintRAccessList(PrintList):
         @staticmethod
@@ -66,6 +74,13 @@ def GenPrintList(finite, raccess, types):
 
 _.AddGeneric('GenPrintList', GenPrintList, finite=ImplPattern('FiniteList', (TypeVar(0),)), raccess=ImplPattern('RandomAccess', (TypeVar(0),)))
 
-iota, I = MakeIota(3)
-I_ = AttributeView(_.Query(print=ImplPattern('PrintList', (I,)))[0][1])
-I_.print.Print(iota)
+def GenMain(iotas, printls, types, _):
+    class MainImpl(Main):
+        @staticmethod
+        def Main():
+            iota = iotas.Create(3)
+            printls.Print(iota)
+    return [Implementation('Main', (), MainImpl)]
+_.AddGeneric('GenMain', GenMain, iotas=ImplPattern('IotaLists', (TypeVar(0),)), printls=ImplPattern('PrintList', (TypeVar(0),)))
+    
+_.Query(main=ImplPattern('Main', ()))[0][1]['main'].Main()
