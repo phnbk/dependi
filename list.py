@@ -82,5 +82,8 @@ def GenMain(iotas, printls, types, _):
             printls.Print(iota)
     return [Implementation('Main', (), MainImpl)]
 _.AddGeneric('GenMain', GenMain, iotas=ImplPattern('IotaLists', (TypeVar(0),)), printls=ImplPattern('PrintList', (TypeVar(0),)))
+
     
+###### QUERY A 'MAIN' #######
+
 _.Query(main=ImplPattern('Main', ()))[0][1]['main'].Main()
