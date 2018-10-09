@@ -85,12 +85,13 @@ class Context(object):
         CheckIsGroundImplementation(impl)
         self.store.AddFact(impl)
     
-    def AddGeneric(self, name, impl_f, **required_impls):
-        """`name` is a free form name for debugging."""
+    def AddGeneric(self, impl_f, name=None, **required_impls):
+        if not name:
+            name = impl_f.__name__
         
         kw_to_pos, required_items_positional = self._KeywordPatternsToPosition(required_impls)
         g = self.Generic(name, impl_f, kw_to_pos)
-        rule = Rule(required_items_positional, partial(self._InstantiateGeneric, g))
+        rule = Rule(name, required_items_positional, partial(self._InstantiateGeneric, g))
         self.store.AddRule(rule)
     
     def Query(self, **queried_impls):

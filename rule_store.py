@@ -4,7 +4,7 @@ from fact_store import DerivedFacts, FactStore, Match
 from copy import deepcopy
 
 # conclusion: a function from Match to a list of facts to add to the store.
-Rule = namedtuple('Rule', 'premise conclusion')
+Rule = namedtuple('Rule', 'name premise conclusion')
 
 class RuleStore(object):
     def __init__(self, unifier):
@@ -57,7 +57,7 @@ class RuleStore(object):
         """Assumes that there are no missing premise symbols in `_facts`."""
         matches = DerivedFacts(self._facts, self.uni, rule.premise).MatchingFacts(must_match)
         if matches:
-            print("Trigger rule %s, %s matches:\n  %s" % (rule, len(matches), matches))
+            print("Trigger rule %s, %s matches:\n  %s" % (rule.name, len(matches), matches))
             for match in matches:
                 for f in rule.conclusion(match):
                     self._facts_to_add.append(f)
